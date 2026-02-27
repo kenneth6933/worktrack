@@ -14,13 +14,10 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, set, get, onValue, push, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
-  // ─── FIREBASE CONFIG ─────────────────────────────────────
-  // TODO: Replace with your Firebase project config
+<!-- Firebase SDK (compat version - works on all browsers/GitHub Pages) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyBdMdNTmGW3S-8Yld2XFSPpnbMtEnmaDaY",
     authDomain: "clockin-82306.firebaseapp.com",
@@ -30,11 +27,18 @@
     messagingSenderId: "1072015314964",
     appId: "1:1072015314964:web:e1d9b92d1c2afea84c9701"
   };
-  // ─────────────────────────────────────────────────────────
+  const _app = firebase.initializeApp(firebaseConfig);
+  const _db  = firebase.database();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  window._fb = { db, ref, set, get, onValue, push, update };
+  window._fb = {
+    db: _db,
+    ref:     (db, path) => _db.ref(path),
+    set:     (ref, val) => ref.set(val),
+    get:     (ref)      => ref.get(),
+    push:    (ref, val) => ref.push(val),
+    update:  (ref, val) => ref.update(val),
+    onValue: (ref, cb)  => ref.on('value', snap => cb(snap))
+  };
   window._fbReady = true;
   window.dispatchEvent(new Event('fbready'));
 </script>
@@ -666,27 +670,19 @@ let userCoords   = null;
 let clockTimer   = null;
 
 // ═══════════════════════════════════════════════════════════
-//  FIREBASE HELPERS
+//  FIREBASE HELPERS (compat SDK)
 // ═══════════════════════════════════════════════════════════
-function fbRef(path) {
-  const {db, ref} = window._fb;
-  return ref(db, path);
-}
-
 async function fbGet(path) {
-  const {get} = window._fb;
-  const snap = await get(fbRef(path));
+  const snap = await firebase.database().ref(path).get();
   return snap.exists() ? snap.val() : null;
 }
 
 async function fbSet(path, val) {
-  const {set} = window._fb;
-  return set(fbRef(path), val);
+  return firebase.database().ref(path).set(val);
 }
 
 async function fbPush(path, val) {
-  const {push} = window._fb;
-  return push(fbRef(path), val);
+  return firebase.database().ref(path).push(val);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -695,10 +691,7 @@ async function fbPush(path, val) {
 async function init() {
   document.getElementById('loadingOverlay').style.display = 'none';
 
-  const fbReady = window._fbReady;
-  const savedConfig = localStorage.getItem('wt_firebase_configured');
-
-  if (fbReady && savedConfig === 'yes') {
+  if (window._fbReady) {
     firebaseMode = true;
     await loadFromFirebase();
   } else {
