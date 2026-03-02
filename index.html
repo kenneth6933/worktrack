@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>WorkTrack</title>
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22WorkTrack%22%2C%22short_name%22%3A%22WorkTrack%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20100%20100%27%3E%3Crect%20width%3D%27100%27%20height%3D%27100%27%20rx%3D%2722%27%20fill%3D%27%230d1117%27%2F%3E%3Ctext%20y%3D%27.9em%27%20font-size%3D%2772%27%20x%3D%2714%27%3E%E2%8F%B1%3C%2Ftext%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22192x192%22%7D%5D%7D">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyBdMdNTmGW3S-8Yld2XFSPpnbMtEnmaDaY",
+    authDomain: "clockin-82306.firebaseapp.com",
+    databaseURL: "https://clockin-82306-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "clockin-82306",
+    storageBucket: "clockin-82306.firebasestorage.app",
+    messagingSenderId: "1072015314964",
+    appId: "1:1072015314964:web:e1d9b92d1c2afea84c9701"
+  });
+  window._fbReady = true;
+</script>
+
+<style>
+:root {
+  --bg:      #0d1117;
+  --surface: #161b22;
+  --card:    #1c2128;
+  --border:  #2d333b;
+  --accent:  #58a6ff;
+  --green:   #3fb950;
+  --green-bg:rgba(63,185,80,0.12);
+  --red:     #f85149;
+  --red-bg:  rgba(248,81,73,0.12);
+  --amber:   #d29922;
+  --amber-bg:rgba(210,153,34,0.12);
+  --ot:      #bc8cff;
+  --ot-bg:   rgba(188,140,255,0.12);
+  --text:    #e6edf3;
+  --muted:   #7d8590;
+  --mono:    'DM Mono',monospace;
+  --body:    'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:var(--body);color:var(--text);}
+
+.screen{display:none;height:100vh;flex-direction:column;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ── LOGIN ── */
+#loginScreen{align-items:center;justify-content:center;padding:24px;background:var(--bg);}
+.login-box{width:100%;max-width:360px;}
+.brand{text-align:center;margin-bottom:36px;}
+.brand-icon{font-size:48px;margin-bottom:12px;}
+.brand-name{font-size:28px;font-weight:800;color:white;letter-spacing:-0.5px;}
+.brand-name span{color:var(--accent);}
+.brand-tag{font-size:10px;letter-spacing:3px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
+.field{margin-bottom:14px;}
+.field-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;}
+.field-inp{width:100%;padding:13px 15px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--body);font-size:15px;outline:none;transition:border-color .2s;}
+.field-inp:focus{border-color:var(--accent);}
+.field-inp::placeholder{color:rgba(255,255,255,.15);}
+.login-btn{width:100%;padding:14px;background:var(--accent);color:#0d1117;border:none;border-radius:10px;font-family:var(--body);font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;transition:opacity .2s;letter-spacing:0.3px;}
+.login-btn:hover{opacity:.9;}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center;min-height:16px;}
+
+/* ── APP SCREEN ── */
+#appScreen{background:var(--bg);}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tb-left{display:flex;flex-direction:column;}
+.tb-greet{font-size:11px;color:var(--muted);}
+.tb-name{font-size:15px;font-weight:700;color:white;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.ot-pill{display:none;align-items:center;gap:5px;background:var(--ot-bg);border:1px solid rgba(188,140,255,.3);color:var(--ot);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.ot-pill.show{display:flex;}
+.ot-dot{width:6px;height:6px;border-radius:50%;background:var(--ot);animation:pulse 1.5s infinite;}
+.logout-btn{padding:6px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--body);}
+
+/* Body scroll */
+.app-body{flex:1;overflow-y:auto;padding:20px;}
+
+/* Clock hero */
+.clock-hero{text-align:center;margin-bottom:20px;}
+.clock-big{font-family:var(--mono);font-size:52px;font-weight:500;letter-spacing:2px;color:white;line-height:1;}
+.clock-date{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.5px;}
+
+/* Status chip */
+.status-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-top:10px;letter-spacing:.3px;}
+.status-chip.idle{background:var(--card);color:var(--muted);border:1px solid var(--border);}
+.status-chip.working{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.status-chip.lunch{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(210,153,34,.3);}
+.status-chip.ot{background:var(--ot-bg);color:var(--ot);border:1px solid rgba(188,140,255,.3);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+.status-dot.pulse{animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* GPS card */
+.gps-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.gps-ico{font-size:18px;}
+.gps-info{flex:1;}
+.gps-name{font-size:13px;font-weight:600;}
+.gps-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.gps-status{font-size:18px;}
+
+/* Summary row */
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.sum-lbl{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px;}
+.sum-val{font-family:var(--mono);font-size:18px;font-weight:500;}
+.sum-val.green{color:var(--green);}
+.sum-val.amber{color:var(--amber);}
+.sum-val.ot{color:var(--ot);}
+
+/* OT banner */
+.ot-banner{background:var(--ot-bg);border:1px solid rgba(188,140,255,.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;}
+.ot-banner.show{display:flex;}
+.ot-banner-left{font-size:12px;font-weight:700;color:var(--ot);}
+.ot-banner-val{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--ot);}
+
+/* ── WORKFLOW BUTTONS ── */
+.workflow{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+
+.wf-btn{
+  width:100%;padding:20px;
+  border:none;border-radius:16px;
+  font-family:var(--body);font-size:17px;font-weight:800;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  letter-spacing:0.3px;
+}
+.wf-btn:active{transform:scale(.97);}
+.wf-btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;}
+
+.wf-btn.start{background:var(--green);color:#0d1117;box-shadow:0 6px 24px rgba(63,185,80,.25);}
+.wf-btn.lunch-start{background:var(--amber);color:#0d1117;box-shadow:0 6px 24px rgba(210,153,34,.2);}
+.wf-btn.lunch-end{background:var(--accent);color:#0d1117;box-shadow:0 6px 24px rgba(88,166,255,.2);}
+.wf-btn.end{background:var(--red);color:white;box-shadow:0 6px 24px rgba(248,81,73,.2);}
+.wf-btn.end-ot{background:var(--ot);color:#0d1117;box-shadow:0 6px 24px rgba(188,140,255,.25);}
+
+.wf-btn-icon{font-size:20px;}
+
+/* Today log */
+.section-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.log-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.log-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);}
+.log-item:last-child{border-bottom:none;}
+.log-left{font-size:12px;color:var(--muted);}
+.log-right{font-family:var(--mono);font-size:13px;font-weight:500;}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-txt{font-size:13px;color:var(--muted);}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:9999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-txt">Connecting…</div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="loginScreen">
+  <div class="login-box">
+    <div class="brand">
+      <div class="brand-icon">⏱</div>
+      <div class="brand-name">Work<span>Track</span></div>
+      <div class="brand-tag">EMPLOYEE CLOCK-IN</div>
+    </div>
+    <div class="field">
+      <div class="field-lbl">Employee ID</div>
+      <input type="text" class="field-inp" id="loginId" placeholder="e.g. EMP001" autocomplete="off" autocapitalize="characters">
+    </div>
+    <div class="field">
+      <div class="field-lbl">Password</div>
+      <input type="password" class="field-inp" id="loginPw" placeholder="Enter password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginError"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="screen" id="appScreen">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-greet">Hello,</div>
+      <div class="tb-name" id="tbName">—</div>
+    </div>
+    <div class="tb-right">
+      <div class="ot-pill" id="otPill"><div class="ot-dot"></div> OT</div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+
+    <!-- Clock -->
+    <div class="clock-hero">
+      <div class="clock-big" id="clockBig">00:00:00</div>
+      <div class="clock-date" id="clockDate"></div>
+      <div class="status-chip idle" id="statusChip">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusTxt">Not Started</span>
+      </div>
+    </div>
+
+    <!-- GPS status -->
+    <div class="gps-card" id="gpsCard">
+      <div class="gps-ico">🏢</div>
+      <div class="gps-info">
+        <div class="gps-name" id="gpsName">Detecting location…</div>
+        <div class="gps-sub" id="gpsSub">Please wait</div>
+      </div>
+      <div class="gps-status" id="gpsIco">⏳</div>
+    </div>
+
+    <!-- Work summary (shown after start) -->
+    <div id="summarySection" style="display:none;">
+      <div class="summary-row">
+        <div class="sum-card">
+          <div class="sum-lbl">Start</div>
+          <div class="sum-val" id="sumStart" style="font-size:14px;">—</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-lbl">Worked</div>
+          <div class="sum-val green" id="sumWorked">0m</div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-lbl">Lunch</div>
+          <div class="sum-val amber" id="sumLunch">—</div>
+        </div>
+      </div>
+      <!-- OT banner -->
+      <div class="ot-banner" id="otBanner">
+        <div class="ot-banner-left">⚡ Overtime</div>
+        <div class="ot-banner-val" id="otDur">0m</div>
+      </div>
+    </div>
+
+    <!-- Workflow buttons -->
+    <div class="workflow" id="workflowBtns">
+      <!-- Rendered dynamically by renderButtons() -->
+    </div>
+
+    <!-- Today's log -->
+    <div id="todaySection" style="display:none;">
+      <div class="section-lbl">Today's Log</div>
+      <div class="log-card" id="todayLog"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  DEFAULTS
+// ═══════════════════════════════════════
+const DEFAULT_SETTINGS = {
+  companyName:'Our Company HQ',
+  gpsRadius:10, officeLat:null, officeLng:null,
+  workStart:'08:30', workEnd:'17:00',
+  graceIn:15, graceOut:15,
+  breakDefault:30, otRounding:30,
+  hourlyRate:25, currency:'RM',
+  officeCoords:null
+};
+
+const DEMO_EMPLOYEES = [
+  {id:'ADMIN',name:'Administrator',                            password:'admin123',role:'admin',active:true},
+  {id:'K001', name:'SIM KWEE HAN',                            password:'150052',  role:'staff',active:true},
+  {id:'K002', name:'NOR AZURA BINTI MAT NOR',                 password:'157062',  role:'staff',active:true},
+  {id:'K003', name:'ZAHARIAH BINTI AB KARIM',                 password:'151042',  role:'staff',active:true},
+  {id:'K004', name:'MARAGATHAM A/P ASEERPATHAM',              password:'170122',  role:'staff',active:true},
+  {id:'K005', name:'NOR SUZILA BINTI MAT NOR',                password:'157842',  role:'staff',active:true},
+  {id:'K006', name:'G BALASARASWATHY DEVI AP N GOVINDASAMY',  password:'154742',  role:'staff',active:true},
+  {id:'K007', name:'KAMRAN',                                  password:'134712',  role:'staff',active:true},
+  {id:'K008', name:'UMAR',                                    password:'163512',  role:'staff',active:true},
+  {id:'K009', name:'Dominggus Bota',                          password:'100022',  role:'staff',active:true},
+  {id:'K010', name:'AHMAD SUPIAN',                            password:'187622',  role:'staff',active:true},
+  {id:'K011', name:'HOSSAIN MOSARA',                          password:'139202',  role:'staff',active:true},
+  {id:'K012', name:'MARIAMMAH A/P VALLOO',                    password:'175582',  role:'staff',active:true},
+];
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let fbMode      = false;
+let currentUser = null;
+let settings    = {...DEFAULT_SETTINGS};
+let employees   = [];
+let gpsOk       = false;
+let userCoords  = null;
+let clockTimer  = null;
+
+// Workflow state
+// stage: 'idle' | 'working' | 'lunch' | 'after_lunch' | 'done'
+let stage        = 'idle';
+let startTime    = null;   // when work started
+let lunchStart   = null;   // when lunch started
+let lunchEnd     = null;   // when lunch ended
+let endTime      = null;   // when work ended
+
+// ═══════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════
+async function fbGet(path){
+  const snap=await firebase.database().ref(path).get();
+  return snap.exists()?snap.val():null;
+}
+async function fbSet(path,val){ return firebase.database().ref(path).set(val); }
+async function fbPush(path,val){ return firebase.database().ref(path).push(val); }
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+async function init(){
+  document.getElementById('loadingOverlay').style.display='none';
+  fbMode=!!window._fbReady;
+  if(fbMode){ await loadFromFirebase(); }
+  else { loadLocalFallback(); }
+  startClock();
+  tryRestoreSession();
+}
+
+async function loadFromFirebase(){
+  try{
+    const fbS=await fbGet('settings');
+    if(fbS) settings={...DEFAULT_SETTINGS,...fbS};
+    const fbE=await fbGet('employees');
+    if(fbE) employees=Object.values(fbE);
+    else { const s={}; DEMO_EMPLOYEES.forEach(e=>s[e.id]=e); await fbSet('employees',s); employees=DEMO_EMPLOYEES; }
+  }catch(e){ loadLocalFallback(); }
+}
+
+function loadLocalFallback(){
+  try{
+    const db=JSON.parse(localStorage.getItem('worktrack_db')||'{}');
+    settings ={...DEFAULT_SETTINGS,...(db.settings||{})};
+    employees=db.employees||DEMO_EMPLOYEES;
+  }catch(e){ employees=DEMO_EMPLOYEES; }
+}
+
+window.addEventListener('load',()=>{
+  let w=0;const t=setInterval(()=>{w+=200;if(window._fbReady||w>3000){clearInterval(t);init();}},200);
+});
+
+// ═══════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+});
+
+async function doLogin(){
+  const id=document.getElementById('loginId').value.trim().toUpperCase();
+  const pw=document.getElementById('loginPw').value;
+  const btn=document.getElementById('loginBtn');
+  const err=document.getElementById('loginError');
+  err.textContent='';
+  btn.disabled=true; btn.textContent='Signing in…';
+
+  if(fbMode){
+    try{
+      const fbE=await fbGet('employees'); if(fbE) employees=Object.values(fbE);
+      const fbS=await fbGet('settings');  if(fbS) settings={...DEFAULT_SETTINGS,...fbS};
+    }catch(e){}
+  }
+
+  const emp=employees.find(e=>e.id===id&&e.password===pw);
+  btn.disabled=false; btn.textContent='Sign In';
+  if(!emp){err.textContent='Invalid Employee ID or password.';return;}
+  if(emp.active===false){err.textContent='This account has been deactivated.';return;}
+
+  currentUser=emp;
+  localStorage.setItem('wt_uid',emp.id);
+  enterApp();
+}
+
+function doLogout(){
+  currentUser=null; stage='idle';
+  startTime=lunchStart=lunchEnd=endTime=null;
+  gpsOk=false;
+  localStorage.removeItem('wt_uid');
+  document.getElementById('loginId').value='';
+  document.getElementById('loginPw').value='';
+  showScreen('loginScreen');
+}
+
+// ═══════════════════════════════════════
+//  SESSION RESTORE
+// ═══════════════════════════════════════
+function tryRestoreSession(){
+  const uid=localStorage.getItem('wt_uid'); if(!uid){showScreen('loginScreen');return;}
+  const emp=employees.find(e=>e.id===uid);
+  if(!emp){localStorage.removeItem('wt_uid');showScreen('loginScreen');return;}
+  currentUser=emp;
+  const ss=JSON.parse(localStorage.getItem(`wt_ss_${uid}`)||'null');
+  if(ss){
+    stage     =ss.stage||'idle';
+    startTime =ss.startTime||null;
+    lunchStart=ss.lunchStart||null;
+    lunchEnd  =ss.lunchEnd||null;
+    endTime   =ss.endTime||null;
+  }
+  enterApp();
+}
+
+function saveSession(){
+  if(!currentUser) return;
+  localStorage.setItem(`wt_ss_${currentUser.id}`,JSON.stringify({stage,startTime,lunchStart,lunchEnd,endTime}));
+}
+
+// ═══════════════════════════════════════
+//  ENTER APP
+// ═══════════════════════════════════════
+function enterApp(){
+  document.getElementById('tbName').textContent=currentUser.name;
+  showScreen('appScreen');
+  startGPS();
+  renderUI();
+  renderTodayLog();
+}
+
+// ═══════════════════════════════════════
+//  CLOCK
+// ═══════════════════════════════════════
+function startClock(){
+  const tick=()=>{
+    const now=new Date();
+    const p=n=>String(n).padStart(2,'0');
+    document.getElementById('clockBig').textContent=`${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+    const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const mos=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('clockDate').textContent=`${days[now.getDay()]}, ${mos[now.getMonth()]} ${now.getDate()}`;
+    if(stage==='working'||stage==='lunch'||stage==='after_lunch') updateLiveStats();
+  };
+  tick();
+  clearInterval(clockTimer);
+  clockTimer=setInterval(tick,1000);
+}
+
+function updateLiveStats(){
+  const now=Date.now();
+  if(!startTime) return;
+
+  // Total lunch duration so far
+  let lunchMs=0;
+  if(lunchStart&&lunchEnd) lunchMs=lunchEnd-lunchStart;
+  else if(lunchStart&&!lunchEnd) lunchMs=now-lunchStart; // currently on lunch
+
+  // Net worked = total elapsed - lunch time
+  const elapsed=now-startTime;
+  const netMs=Math.max(0,elapsed-lunchMs);
+
+  document.getElementById('sumWorked').textContent=fmtDurShort(netMs);
+  document.getElementById('sumLunch').textContent=lunchMs>0?fmtDurShort(lunchMs):'—';
+
+  // OT
+  const endParts=settings.workEnd.split(':');
+  const todayEnd=new Date(); todayEnd.setHours(parseInt(endParts[0]),parseInt(endParts[1]),0,0);
+  const isOT=now>todayEnd.getTime()&&stage!=='idle'&&stage!=='done';
+  document.getElementById('otBanner').classList.toggle('show',isOT);
+  document.getElementById('otPill').classList.toggle('show',isOT);
+  if(isOT){
+    const otMs=now-todayEnd.getTime();
+    document.getElementById('otDur').textContent=fmtDurShort(otMs);
+  }
+}
+
+// ═══════════════════════════════════════
+//  GPS
+// ═══════════════════════════════════════
+function startGPS(){
+  if(!navigator.geolocation){gpsOk=true;setGpsUI(true,'Demo mode');renderUI();return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    // Use manual coords if set, else auto-detect
+    if(settings.officeLat&&settings.officeLng){
+      settings.officeCoords={lat:settings.officeLat,lng:settings.officeLng};
+    } else if(!settings.officeCoords){
+      settings.officeCoords={...userCoords};
+      persistSettings();
+    }
+    const dist=calcDist(userCoords,settings.officeCoords);
+    const ok=dist<=settings.gpsRadius;
+    gpsOk=ok;
+    document.getElementById('gpsName').textContent=ok?settings.companyName:'Outside office range';
+    document.getElementById('gpsSub').textContent=`${Math.round(dist)}m from office`;
+    document.getElementById('gpsIco').textContent=ok?'✅':'❌';
+    setGpsUI(ok,ok?`✅ Within range (${Math.round(dist)}m)`:`❌ ${Math.round(dist-settings.gpsRadius)}m outside range`);
+    renderUI();
+  },()=>{
+    gpsOk=true;
+    document.getElementById('gpsName').textContent=settings.companyName;
+    document.getElementById('gpsSub').textContent='GPS unavailable — demo mode';
+    document.getElementById('gpsIco').textContent='✅';
+    setGpsUI(true,'✅ Demo mode');
+    renderUI();
+  },{enableHighAccuracy:true,timeout:8000});
+}
+
+function setGpsUI(ok,msg){
+  const card=document.getElementById('gpsCard');
+  card.style.borderColor=ok?'rgba(63,185,80,.3)':'rgba(248,81,73,.3)';
+  card.style.background=ok?'rgba(63,185,80,.06)':'rgba(248,81,73,.06)';
+}
+
+function calcDist(a,b){
+  const R=6371000,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+
+// ═══════════════════════════════════════
+//  WORKFLOW ACTIONS
+// ═══════════════════════════════════════
+let _startingWork = false;
+function doStartWork(){
+  if(_startingWork) return;
+  if(!gpsOk){toast('❌ GPS not verified');return;}
+  _startingWork = true;
+  startTime=Date.now();
+  stage='working';
+  saveSession();
+  const lateMs=getLateMs();
+  if(lateMs>settings.graceIn*60000) toast(`⚠️ Late by ${fmtMin(lateMs-settings.graceIn*60000)}`);
+  else toast('✅ Work started!');
+  renderUI();
+  setTimeout(()=>{ _startingWork=false; }, 3000);
+}
+
+let _lunchStarting = false;
+function doLunchStart(){
+  if(_lunchStarting) return;
+  _lunchStarting = true;
+  lunchStart=Date.now();
+  stage='lunch';
+  saveSession();
+  toast('🍽️ Lunch started');
+  renderUI();
+  setTimeout(()=>{ _lunchStarting=false; }, 3000);
+}
+
+function doLunchEnd(){
+  lunchEnd=Date.now();
+  stage='after_lunch';
+  saveSession();
+  const dur=lunchEnd-lunchStart;
+  toast(`↩ Back to work — lunch: ${fmtDurShort(dur)}`);
+  renderUI();
+}
+
+let _endingWork = false; // prevent double submit
+
+async function doEndWork(){
+  if(_endingWork) return; // block double tap
+  if(stage==='done') return; // already ended
+  _endingWork = true;
+
+  // Immediately set done + disable buttons to prevent second tap
+  stage='done';
+  renderButtons();
+
+  const now=Date.now();
+  if(!startTime){ _endingWork=false; return; }
+
+  // Calculate lunch duration
+  let lunchMs=0;
+  if(lunchStart&&lunchEnd) lunchMs=lunchEnd-lunchStart;
+  else if(lunchStart&&!lunchEnd){ lunchEnd=now; lunchMs=lunchEnd-lunchStart; }
+
+  const rawMs=now-startTime;
+  const cappedLunch=Math.min(lunchMs,settings.breakDefault*60000);
+  const netMs=Math.max(0,rawMs-cappedLunch);
+  const hours=netMs/3600000;
+
+  // OT
+  const endParts=settings.workEnd.split(':');
+  const todayEnd=new Date(startTime);
+  todayEnd.setHours(parseInt(endParts[0]),parseInt(endParts[1]),0,0);
+  const otMs=now>todayEnd.getTime()?now-todayEnd.getTime():0;
+
+  const rec={
+    employeeId:  currentUser.id,
+    employeeName:currentUser.name,
+    date:new Date(startTime).toISOString().split('T')[0],
+    clockIn:  startTime,
+    clockOut: now,
+    lunchStart:lunchStart||null,
+    lunchEnd:  lunchEnd||null,
+    rawMs, breakMs:lunchMs, cappedBreakMs:cappedLunch,
+    netMs, hours:parseFloat(hours.toFixed(4)),
+    otMs, otHours:parseFloat((otMs/3600000).toFixed(4)),
+    lateMs:getLateMs(),
+    method:'gps', timestamp:now
+  };
+
+  if(fbMode){ try{ await fbPush(`records/${currentUser.id}`,rec); }catch(e){console.warn(e);} }
+  try{
+    const ex=JSON.parse(localStorage.getItem('worktrack_db')||'{}');
+    ex.records=ex.records||[]; ex.records.unshift(rec);
+    localStorage.setItem('worktrack_db',JSON.stringify(ex));
+  }catch(e){}
+
+  endTime=now;
+  saveSession();
+  renderUI();
+  renderTodayLog();
+  toast(`✅ Work ended — ${hours.toFixed(1)}h net${otMs>0?` (OT: ${fmtMin(otMs)})`:''}`)
+  _endingWork = false;
+}
+
+// ═══════════════════════════════════════
+//  RENDER UI
+// ═══════════════════════════════════════
+function renderUI(){
+  // Status chip
+  const chip=document.getElementById('statusChip');
+  const dot =document.getElementById('statusDot');
+  const txt =document.getElementById('statusTxt');
+  const statusMap={
+    idle:      {cls:'idle',    label:'Not Started',    dot:''},
+    working:   {cls:'working', label:'Working',        dot:'pulse'},
+    lunch:     {cls:'lunch',   label:'Lunch Break',    dot:'pulse'},
+    after_lunch:{cls:'working',label:'Working',        dot:'pulse'},
+    done:      {cls:'idle',    label:'Day Completed ✓',dot:''},
+  };
+  const s=statusMap[stage]||statusMap.idle;
+  chip.className=`status-chip ${s.cls}`;
+  dot.className =`status-dot ${s.dot}`;
+  txt.textContent=s.label;
+
+  // Show/hide summary
+  document.getElementById('summarySection').style.display=
+    (stage==='idle'||stage==='done')?'none':'';
+
+  if(stage!=='idle'&&stage!=='done'&&startTime){
+    document.getElementById('sumStart').textContent=fmtTime(startTime);
+  }
+
+  // Hide GPS card once working
+  document.getElementById('gpsCard').style.display=
+    (stage==='idle')?'':'none';
+
+  // Render buttons
+  renderButtons();
+}
+
+function renderButtons(){
+  const container=document.getElementById('workflowBtns');
+  const now=Date.now();
+  const endParts=settings.workEnd.split(':');
+  const todayEnd=new Date(); todayEnd.setHours(parseInt(endParts[0]),parseInt(endParts[1]),0,0);
+  const isOT=startTime&&now>todayEnd.getTime();
+
+  let html='';
+  if(stage==='idle'){
+    html=`<button class="wf-btn start" onclick="doStartWork()" ${gpsOk?'':'disabled'}>
+      <span class="wf-btn-icon">▶️</span> Start Work
+    </button>`;
+    if(!gpsOk) html+=`<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:-4px;">Waiting for GPS verification…</div>`;
+  } else if(stage==='working'){
+    html=`
+      <button class="wf-btn lunch-start" onclick="doLunchStart()">
+        <span class="wf-btn-icon">🍽️</span> Lunch Break
+      </button>
+      <button class="wf-btn ${isOT?'end-ot':'end'}" onclick="doEndWork()">
+        <span class="wf-btn-icon">⏹</span> ${isOT?'End Work (OT)':'End Work'}
+      </button>`;
+  } else if(stage==='lunch'){
+    html=`
+      <button class="wf-btn lunch-end" onclick="doLunchEnd()">
+        <span class="wf-btn-icon">↩</span> Back to Work
+      </button>
+      <button class="wf-btn end" onclick="doEndWork()" style="opacity:.7;font-size:14px;padding:14px;">
+        <span class="wf-btn-icon">⏹</span> End Work Early
+      </button>`;
+  } else if(stage==='after_lunch'){
+    html=`
+      <button class="wf-btn ${isOT?'end-ot':'end'}" onclick="doEndWork()">
+        <span class="wf-btn-icon">⏹</span> ${isOT?'End Work (OT)':'End Work'}
+      </button>`;
+  } else if(stage==='done'){
+    html=`<div style="text-align:center;padding:24px;color:var(--muted);">
+      <div style="font-size:36px;margin-bottom:8px;">🎉</div>
+      <div style="font-size:14px;font-weight:700;color:var(--green);">Day Completed!</div>
+      <div style="font-size:12px;margin-top:4px;">See you tomorrow</div>
+    </div>`;
+  }
+  container.innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+//  TODAY LOG
+// ═══════════════════════════════════════
+async function renderTodayLog(){
+  const today=new Date().toISOString().split('T')[0];
+  let recs=[];
+  if(fbMode){
+    try{ const r=await fbGet(`records/${currentUser.id}`); if(r) recs=Object.values(r).filter(x=>x.date===today); }catch(e){}
+  } else {
+    try{ const db=JSON.parse(localStorage.getItem('worktrack_db')||'{}'); recs=(db.records||[]).filter(r=>r.employeeId===currentUser.id&&r.date===today); }catch(e){}
+  }
+  const sec=document.getElementById('todaySection');
+  if(recs.length===0){sec.style.display='none';return;}
+  sec.style.display='';
+  document.getElementById('todayLog').innerHTML=recs.map(r=>`
+    <div class="log-item">
+      <div class="log-left">${fmtTime(r.clockIn)} → ${fmtTime(r.clockOut)}</div>
+      <div class="log-right" style="color:${r.otMs>0?'var(--ot)':'var(--green)'}">
+        ${r.hours.toFixed(1)}h${r.otMs>0?' ⚡':''}
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function getLateMs(){
+  if(!startTime) return 0;
+  const p=settings.workStart.split(':');
+  const s=new Date(startTime); s.setHours(parseInt(p[0]),parseInt(p[1]),0,0);
+  return Math.max(0,startTime-s.getTime());
+}
+
+function fmtTime(ts){
+  if(!ts)return'—';
+  const d=new Date(ts),h=d.getHours(),m=d.getMinutes();
+  return`${String(h%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+}
+function fmtDurShort(ms){
+  const m=Math.floor(ms/60000),h=Math.floor(m/60);
+  return h>0?`${h}h ${m%60}m`:`${m}m`;
+}
+function fmtMin(ms){ return`${Math.round(Math.abs(ms)/60000)}min`; }
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+async function persistSettings(){
+  if(fbMode){ try{ await fbSet('settings',settings); }catch(e){} }
+  try{
+    const ex=JSON.parse(localStorage.getItem('worktrack_db')||'{}');
+    localStorage.setItem('worktrack_db',JSON.stringify({...ex,settings}));
+  }catch(e){}
+}
+</script>
+</body>
+</html>
